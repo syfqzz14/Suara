@@ -110,8 +110,8 @@ def plot_bar_and_spectrogram(y, sr):
     # === Bar plot amplitudo ===
     step = max(1, len(y) // 200)
     time_axis = np.linspace(0, len(y) / sr, len(y))
-    axes[0].bar(time_axis[::step], y[::step], width=0.002, color='#3e82f7', alpha=0.8)
-    axes[0].set_title("Amplitudo (Bar Plot)", fontsize=12, color='white')
+    axes[0].bar(time_axis[::step], y[::step], width=0.002, color='#58a6ff', alpha=0.8)
+    axes[0].set_title("📊 Amplitudo (Bar Plot)", fontsize=12, color='white')
     axes[0].set_xlabel("Waktu (detik)")
     axes[0].set_ylabel("Amplitudo")
     axes[0].grid(alpha=0.2, color='gray')
@@ -119,106 +119,111 @@ def plot_bar_and_spectrogram(y, sr):
     # === Spektrogram ===
     S = librosa.amplitude_to_db(np.abs(librosa.stft(y, n_fft=1024, hop_length=256)), ref=np.max)
     img = librosa.display.specshow(S, sr=sr, hop_length=256, x_axis='time', y_axis='linear', ax=axes[1], cmap='magma')
-    axes[1].set_title("Spectrogram (dB)", fontsize=12, color='white')
+    axes[1].set_title("🎶 Spectrogram (dB)", fontsize=12, color='white')
     fig.colorbar(img, ax=axes[1], format='%+2.0f dB')
 
     plt.tight_layout()
     return fig
 
 # ==========================================================
-# 🚀 Main App (UI diperindah)
+# 🚀 Main App
 # ==========================================================
 def main():
-    st.markdown("<h1 style='text-align: center;'>🎧 Klasifikasi Suara Buka/Tutup</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #cccccc;'>Deteksi otomatis jenis suara (buka/tutup) menggunakan model Machine Learning</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>🎧 Klasifikasi Suara Buka/Tutup</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#cccccc;'>Deteksi otomatis jenis suara (buka/tutup) menggunakan model Machine Learning</p>", unsafe_allow_html=True)
 
+    # 🌈 CSS gaya baru
     st.markdown("""
     <style>
         [data-testid="stAppViewContainer"] {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            background: radial-gradient(circle at top left, #1a1f2b, #0b0f16);
             color: #f1f1f1;
         }
-        h1, h2, h3, h4 { color: #58a6ff !important; }
         [data-testid="stSidebar"] {
-            background-color: #1c1f26;
-            border-right: 1px solid #333;
+            background-color: #0e1117;
+            color: #ffffff;
+            border-right: 2px solid #2a2a2a;
         }
         div.stButton > button {
-            background: linear-gradient(90deg, #007bff, #00c6ff);
-            border-radius: 10px;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            color: white;
             font-weight: bold;
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+        h1,h2,h3 {
+            color: #00c6ff !important;
         }
         .audiobox {
-            background: #1c2833;
-            padding: 1rem;
-            border-radius: 12px;
-            border: 1px solid #333;
+            background: #161b22;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #2a2a2a;
         }
     </style>
     """, unsafe_allow_html=True)
 
     model, scaler, feature_names, metadata, cfg = load_model_artifacts()
 
-    # Sidebar info
+    # Sidebar
     with st.sidebar:
-        st.markdown("## 📘 Informasi Model")
-        st.metric("Akurasi Training", "100.00%")
-        st.metric("Akurasi Testing", "98.75%")
-        st.metric("Jumlah Fitur", "70")
-        st.metric("Sample Rate", "16000 Hz")
-
+        st.header("Informasi Model")
+        st.metric("Akurasi Training", f"{metadata['train_accuracy']:.2%}")
+        st.metric("Akurasi Testing", f"{metadata['test_accuracy']:.2%}")
+        st.metric("Jumlah Fitur", str(metadata['n_features']))
+        st.metric("Sample Rate", f"{metadata['target_sr']} Hz")
         st.markdown("---")
-        st.markdown("## 🧭 Petunjuk")
-        st.info("""
-        Pilih sumber suara (rekam atau upload file audio), 
-        lalu klik **Prediksi** untuk melihat hasil klasifikasi.
-        """)
+        st.info("🎙️ Rekam atau upload file suara, lalu klik **Prediksi** untuk hasil klasifikasi.")
 
+    st.subheader("Input Audio")
+    mode = st.radio("Pilih sumber audio:", ["Rekam Langsung", "Upload File"])
 
-    # Input audio
-    st.subheader("🎙️ Input Audio")
-
-    col1, col2 = st.columns([1, 2])
-
-    with col1:
-        st.markdown("**Pilih sumber audio:**")
-        mode = st.radio("", ["Rekam Langsung", "Upload File"])
-
-    with col2:
-        if mode == "Rekam Langsung":
-            audio_bytes = audio_recorder(text="", recording_color="#ff4b4b", neutral_color="#eeeeee", icon_size="2x")
-        else:
-            audio_file = st.file_uploader("Upload file audio (format .wav/.mp3)", type=["wav", "mp3"])
-            audio_bytes = audio_file.read() if audio_file else None
-
+    audio_data, sr = None, None
+    if mode == "Rekam Langsung":
+        audio_bytes = audio_recorder(text="", recording_color="#ff4b4b", neutral_color="#eeeeee", icon_size="2x")
+        if audio_bytes:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                tmp.write(audio_bytes)
+                tmp_path = tmp.name
+            y, sr = librosa.load(tmp_path, sr=None, mono=True)
+            st.markdown("<div class='audiobox'>", unsafe_allow_html=True)
+            st.audio(audio_bytes, format="audio/wav")
+            st.markdown("</div>", unsafe_allow_html=True)
+            audio_data = y
+            os.remove(tmp_path)
+    else:
+        uploaded_file = st.file_uploader("Upload file audio", type=["wav", "mp3"])
+        if uploaded_file:
+            y, sr = librosa.load(uploaded_file, sr=None, mono=True)
+            st.markdown("<div class='audiobox'>", unsafe_allow_html=True)
+            st.audio(uploaded_file, format="audio/wav")
+            st.markdown("</div>", unsafe_allow_html=True)
+            audio_data = y
 
     # Tombol prediksi
-    if audio_bytes is not None:
-        st.markdown("<div class='audiobox'>", unsafe_allow_html=True)
-        st.audio(audio_bytes, format="audio/wav")
-        st.markdown("</div>", unsafe_allow_html=True)
+    if audio_data is not None and sr is not None:
+        if st.button("Prediksi", use_container_width=True):
+            with st.spinner("Memproses dan memprediksi..."):
+                pred, prob, y_proc = predict_audio(audio_data, sr, model, scaler, feature_names, metadata, cfg)
+                if pred is not None:
+                    label = metadata["label_map"][pred]
+                    st.success(f"Hasil Prediksi: **{label.upper()}**")
 
-        if st.button("🔍 Prediksi", use_container_width=True):
-            st.write("⏳ Sedang memproses audio...")
+                    # Diagram batang probabilitas
+                    st.markdown("###Probabilitas Klasifikasi")
+                    fig, ax = plt.subplots(figsize=(6, 3))
+                    labels = list(metadata["label_map"].values())
+                    probs = [prob[i]*100 for i in range(len(labels))]
+                    ax.bar(labels, probs, color=['#00c6ff', '#ff6f61'], alpha=0.8)
+                    ax.set_ylabel("Persentase (%)")
+                    ax.set_ylim(0, 100)
+                    for i, v in enumerate(probs):
+                        ax.text(i, v + 2, f"{v:.1f}%", ha='center', color='white', fontsize=10)
+                    st.pyplot(fig)
 
-            # Dummy prediksi (bisa diganti model aslimu)
-            y_proc = np.random.rand(1000)
-            sr = 16000
-
-            # Visualisasi Spektrogram
-            S = np.abs(librosa.stft(y_proc))
-            S_db = librosa.amplitude_to_db(S, ref=np.max)
-
-            fig, ax = plt.subplots(figsize=(10, 4))
-            img = librosa.display.specshow(S_db, sr=sr, x_axis='time', y_axis='hz', ax=ax)
-            ax.set_title("Spektrogram Suara")
-            fig.colorbar(img, ax=ax, format="%+2.0f dB")
-
-            st.pyplot(fig)
-            st.success("✅ Klasifikasi selesai! (hasil prediksi akan ditampilkan di sini)")
-    else:
-        st.warning("⚠️ Silakan rekam atau upload audio terlebih dahulu.")
-
+                    # Visualisasi audio
+                    st.markdown("###Visualisasi Audio")
+                    st.pyplot(plot_bar_and_spectrogram(y_proc, metadata["target_sr"]))
 
 if __name__ == "__main__":
     main()
