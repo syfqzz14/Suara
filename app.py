@@ -123,69 +123,89 @@ def main():
     # ==== CSS kustom untuk gaya tampilan ====
     st.markdown("""
     <style>
-        :root {
-            --primary-color: #3498db;
-            --accent-color: #1f77c9;
-            --bg-light: #F8F9FB;
-            --bg-dark: #1E1E1E;
-            --text-light: #2E86C1;
-            --text-dark: #EAF2F8;
+        /* --- Umum --- */
+        .stApp {
+            background: linear-gradient(135deg, #0F2027, #203A43, #2C5364);
+            color: white;
+            font-family: 'Poppins', sans-serif;
         }
 
-        /* Gunakan preferensi sistem (dark/light mode) */
-        @media (prefers-color-scheme: light) {
-            .stApp {
-                background-color: var(--bg-light);
-                color: black;
-            }
-            h1, h2, h3, h4 {
-                color: var(--text-light);
-                font-family: 'Poppins', sans-serif;
-            }
-            [data-testid="stSidebar"] {
-                background-color: #ECF0F1;
-            }
-            .stButton>button {
-                background-color: var(--primary-color);
-                color: white;
-                border-radius: 6px;
-                font-weight: bold;
-                transition: all 0.2s ease;
-            }
-            .stButton>button:hover {
-                background-color: var(--accent-color);
-                transform: scale(1.02);
-            }
+        /* --- Judul utama --- */
+        h1 {
+            font-weight: 800;
+            font-size: 2.2rem !important;
+            color: #00d4ff !important;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
 
-        @media (prefers-color-scheme: dark) {
-            .stApp {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-            h1, h2, h3, h4 {
-                color: var(--text-dark);
-                font-family: 'Poppins', sans-serif;
-            }
-            [data-testid="stSidebar"] {
-                background-color: #2C2C2C;
-            }
-            .stButton>button {
-                background-color: var(--accent-color);
-                color: white;
-                border-radius: 6px;
-                font-weight: bold;
-                transition: all 0.2s ease;
-            }
-            .stButton>button:hover {
-                background-color: #5dade2;
-                transform: scale(1.02);
-            }
+        h2, h3, h4 {
+            color: #AEEEEE !important;
         }
 
-        /* Progress bar biru */
+        /* --- Sidebar --- */
+        [data-testid="stSidebar"] {
+            background: rgba(15, 32, 39, 0.95);
+            color: white;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-testid="stSidebar"] h2 {
+            color: #00d4ff !important;
+        }
+
+        /* --- Tombol --- */
+        .stButton > button {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.3s ease;
+        }
+
+        .stButton > button:hover {
+            background: linear-gradient(90deg, #0072ff, #00c6ff);
+            transform: scale(1.05);
+            box-shadow: 0px 0px 10px rgba(0, 198, 255, 0.5);
+        }
+
+        /* --- Card (container untuk info) --- */
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+        }
+
+        /* --- Audio player --- */
+        audio {
+            width: 100%;
+            filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
+        }
+
+        /* --- Progress bar --- */
         .stProgress > div > div > div > div {
-            background-color: var(--primary-color);
+            background-color: #00d4ff;
+        }
+
+        /* --- Info box --- */
+        .stAlert {
+            background: rgba(255,255,255,0.1) !important;
+            color: #E0FFFF !important;
+            border-radius: 10px;
+            border: 1px solid rgba(0,212,255,0.3);
+        }
+
+        /* --- Radio button label --- */
+        label, .stRadio > label {
+            font-size: 1rem !important;
+            color: #E6F1FF !important;
         }
     </style>
     """, unsafe_allow_html=True)
