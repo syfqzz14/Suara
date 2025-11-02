@@ -102,7 +102,7 @@ def predict_audio(y, sr, model, scaler, feature_names, metadata, cfg):
 # ==========================================================
 # 🎧 Visualisasi audio
 # ==========================================================
-def plot_waveform_and_spectrogram(y, sr):
+def plot_bar_and_spectrogram(y, sr):
     fig, axes = plt.subplots(2, 1, figsize=(10, 6))
     plt.style.use('dark_background')
 
