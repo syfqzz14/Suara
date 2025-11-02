@@ -146,8 +146,39 @@ def plot_waveform_and_spectrogram(y, sr):
 # 🚀 Main App
 # ==========================================================
 def main():
-    st.title("Klasifikasi Suara Buka/Tutup")
-    st.markdown("### Selamat Datang ygy")
+    # ====== Gaya tampilan sederhana ======
+    st.markdown("""
+        <style>
+            h1 {
+                text-align: center;
+                color: #2E86C1;
+            }
+            .css-18e3th9 {
+                padding-top: 1rem;
+            }
+            .stButton>button {
+                background-color: #3498db;
+                color: white;
+                border-radius: 6px;
+                font-weight: bold;
+                transition: 0.3s;
+            }
+            .stButton>button:hover {
+                background-color: #1f77c9;
+                transform: scale(1.03);
+            }
+            .stSidebar {
+                background-color: #f8f9fa !important;
+            }
+            .stProgress > div > div > div > div {
+                background-color: #3498db;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Judul utama
+    st.title("🎙️ Klasifikasi Suara Buka/Tutup")
+    st.markdown("Aplikasi sederhana untuk mendeteksi suara buka dan tutup berbasis machine learning.")
 
     with st.spinner("Memuat model..."):
         model, scaler, feature_names, metadata, cfg = load_model_artifacts()
