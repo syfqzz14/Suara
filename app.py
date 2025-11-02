@@ -128,7 +128,7 @@ def plot_waveform_and_spectrogram(y, sr):
 # 🚀 Main App (UI diperindah)
 # ==========================================================
 def main():
-     st.markdown("<h1 style='text-align: center; color: #3e82f7;'>🎧 Klasifikasi Suara Buka/Tutup</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #3e82f7;'>🎧 Klasifikasi Suara Buka/Tutup</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #cccccc;'>Deteksi otomatis jenis suara (buka/tutup) menggunakan model Machine Learning</p>", unsafe_allow_html=True)
 
     model, scaler, feature_names, metadata, cfg = load_model_artifacts()
