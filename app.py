@@ -147,7 +147,7 @@ def plot_waveform_and_spectrogram(y, sr):
 # ==========================================================
 def main():
     st.title("Klasifikasi Suara Buka/Tutup")
-    st.markdown("### Selamat datang di aplikasi Voice Over Augmentasi")
+    st.markdown("### Selamat Datang ygy")
 
     with st.spinner("Memuat model..."):
         model, scaler, feature_names, metadata, cfg = load_model_artifacts()
@@ -160,7 +160,7 @@ def main():
     st.sidebar.write(f"**Sample Rate:** {metadata['target_sr']} Hz")
     st.sidebar.markdown("---")
     st.sidebar.header("Petunjuk")
-    st.sidebar.markdown()
+    st.sidebar.markdown("Pengaturan Voice Over")
 
     st.subheader("Rekam atau Upload Suara")
 
