@@ -122,37 +122,74 @@ def plot_waveform_and_spectrogram(y, sr):
 def main():
     # ==== CSS kustom untuk gaya tampilan ====
     st.markdown("""
-        <style>
-            /* Warna dan font utama */
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --accent-color: #1f77c9;
+            --bg-light: #F8F9FB;
+            --bg-dark: #1E1E1E;
+            --text-light: #2E86C1;
+            --text-dark: #EAF2F8;
+        }
+
+        /* Gunakan preferensi sistem (dark/light mode) */
+        @media (prefers-color-scheme: light) {
+            .stApp {
+                background-color: var(--bg-light);
+                color: black;
+            }
             h1, h2, h3, h4 {
-                color: #2E86C1;
+                color: var(--text-light);
                 font-family: 'Poppins', sans-serif;
             }
-            .stApp {
-                background-color: #F8F9FB;
-            }
-            /* Sidebar */
             [data-testid="stSidebar"] {
                 background-color: #ECF0F1;
             }
-            /* Tombol */
             .stButton>button {
-                background-color: #3498db;
+                background-color: var(--primary-color);
                 color: white;
                 border-radius: 6px;
                 font-weight: bold;
                 transition: all 0.2s ease;
             }
             .stButton>button:hover {
-                background-color: #1f77c9;
+                background-color: var(--accent-color);
                 transform: scale(1.02);
             }
-            /* Audio player & progress */
-            .stProgress > div > div > div > div {
-                background-color: #3498db;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .stApp {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
             }
-        </style>
+            h1, h2, h3, h4 {
+                color: var(--text-dark);
+                font-family: 'Poppins', sans-serif;
+            }
+            [data-testid="stSidebar"] {
+                background-color: #2C2C2C;
+            }
+            .stButton>button {
+                background-color: var(--accent-color);
+                color: white;
+                border-radius: 6px;
+                font-weight: bold;
+                transition: all 0.2s ease;
+            }
+            .stButton>button:hover {
+                background-color: #5dade2;
+                transform: scale(1.02);
+            }
+        }
+
+        /* Progress bar biru */
+        .stProgress > div > div > div > div {
+            background-color: var(--primary-color);
+        }
+    </style>
     """, unsafe_allow_html=True)
+
 
     # ======= Header utama =======
     st.title("🎙️ Klasifikasi Suara Buka/Tutup")
