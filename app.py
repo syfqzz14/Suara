@@ -104,15 +104,23 @@ def predict_audio(y, sr, model, scaler, feature_names, metadata, cfg):
 # ==========================================================
 def plot_waveform_and_spectrogram(y, sr):
     fig, axes = plt.subplots(2, 1, figsize=(10, 6))
-    librosa.display.waveshow(y, sr=sr, ax=axes[0], color='#1f77c9')
-    axes[0].set_title("Waveform")
+    plt.style.use('dark_background')
+
+    # === Bar plot amplitudo ===
+    step = max(1, len(y) // 200)
+    time_axis = np.linspace(0, len(y) / sr, len(y))
+    axes[0].bar(time_axis[::step], y[::step], width=0.002, color='#3e82f7', alpha=0.8)
+    axes[0].set_title("Amplitudo (Bar Plot)", fontsize=12, color='white')
     axes[0].set_xlabel("Waktu (detik)")
     axes[0].set_ylabel("Amplitudo")
-    axes[0].grid(alpha=0.3)
+    axes[0].grid(alpha=0.2, color='gray')
+
+    # === Spektrogram ===
     S = librosa.amplitude_to_db(np.abs(librosa.stft(y, n_fft=1024, hop_length=256)), ref=np.max)
     img = librosa.display.specshow(S, sr=sr, hop_length=256, x_axis='time', y_axis='linear', ax=axes[1], cmap='magma')
-    axes[1].set_title("Spectrogram (dB)")
+    axes[1].set_title("Spectrogram (dB)", fontsize=12, color='white')
     fig.colorbar(img, ax=axes[1], format='%+2.0f dB')
+
     plt.tight_layout()
     return fig
 
@@ -120,90 +128,68 @@ def plot_waveform_and_spectrogram(y, sr):
 # 🚀 Main App (UI diperindah)
 # ==========================================================
 def main():
-    st.markdown(
-        "<h1 style='text-align:center; color:#1E90FF;'>🔊 Klasifikasi Suara Buka/Tutup</h1>"
-        "<p style='text-align:center;'>Deteksi otomatis jenis suara (buka/tutup) menggunakan model Machine Learning</p><hr>",
-        unsafe_allow_html=True
-    )
+     st.markdown("<h1 style='text-align: center; color: #3e82f7;'>🎧 Klasifikasi Suara Buka/Tutup</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #cccccc;'>Deteksi otomatis jenis suara (buka/tutup) menggunakan model Machine Learning</p>", unsafe_allow_html=True)
 
-    with st.spinner("🔄 Memuat model dan konfigurasi..."):
-        model, scaler, feature_names, metadata, cfg = load_model_artifacts()
+    model, scaler, feature_names, metadata, cfg = load_model_artifacts()
 
-    # Sidebar Info
-    st.sidebar.markdown("### 📊 Informasi Model")
-    st.sidebar.markdown(
-        f"""
-        **Akurasi Training:** {metadata['train_accuracy']:.2%}  
-        **Akurasi Testing:** {metadata['test_accuracy']:.2%}  
-        **Jumlah Fitur:** {metadata['n_features']}  
-        **Sample Rate:** {metadata['target_sr']} Hz
-        """
-    )
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 🧭 Petunjuk")
-    st.sidebar.info("Pilih sumber suara, rekam atau upload file audio, lalu klik **Prediksi** untuk melihat hasil klasifikasi.")
+    # Sidebar info
+    with st.sidebar:
+        st.markdown("### 📊 Informasi Model")
+        st.markdown(f"**Akurasi Training:** {metadata['train_accuracy']:.2%}")
+        st.markdown(f"**Akurasi Testing:** {metadata['test_accuracy']:.2%}")
+        st.markdown(f"**Jumlah Fitur:** {metadata['n_features']}")
+        st.markdown(f"**Sample Rate:** {metadata['target_sr']} Hz")
+        st.divider()
+        st.markdown("### 🧭 Petunjuk")
+        st.info("Pilih sumber suara, rekam atau upload file audio, lalu klik **Prediksi** untuk melihat hasil klasifikasi.")
 
-    # Konten utama
-    st.subheader("🎙️ Input Audio")
+    # Input audio
+    st.markdown("## 🎙️ Input Audio")
     option = st.radio("Pilih sumber audio:", ["Rekam Langsung", "Upload File"])
-
     audio_data, sr = None, None
 
-    # ===== Rekam langsung =====
     if option == "Rekam Langsung":
-        audio_bytes = audio_recorder(
-            text="Klik untuk mulai/stop rekam",
-            recording_color="#ff4b4b",
-            neutral_color="#1E90FF",
-            icon_size="2x"
-        )
+        audio_bytes = audio_recorder(text="Klik untuk mulai/stop rekam 🎤", recording_color="#e74c3c", neutral_color="#3e82f7", icon_size="2x")
         if audio_bytes:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
                 tmp.write(audio_bytes)
                 tmp_path = tmp.name
-            try:
-                y, sr = librosa.load(tmp_path, sr=None, mono=True)
-                st.audio(audio_bytes, format="audio/wav")
-                audio_data = y
-            finally:
-                os.remove(tmp_path)
-
-    # ===== Upload file =====
+            y, sr = librosa.load(tmp_path, sr=None, mono=True)
+            os.remove(tmp_path)
+            st.audio(audio_bytes, format="audio/wav")
+            audio_data = y
     else:
-        uploaded_file = st.file_uploader("📁 Upload file audio", type=["wav", "mp3"])
+        uploaded_file = st.file_uploader("Upload file audio", type=["wav", "mp3"])
         if uploaded_file is not None:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
                 tmp.write(uploaded_file.read())
                 tmp_path = tmp.name
-            try:
-                y, sr = librosa.load(tmp_path, sr=None, mono=True)
-                st.audio(uploaded_file, format="audio/wav")
-                audio_data = y
-            finally:
-                os.remove(tmp_path)
+            y, sr = librosa.load(tmp_path, sr=None, mono=True)
+            os.remove(tmp_path)
+            st.audio(uploaded_file, format="audio/wav")
+            audio_data = y
 
-    # ===== Tombol Prediksi =====
+    # Tombol prediksi
     if audio_data is not None and sr is not None:
-        durasi = len(audio_data) / sr
-        st.info(f"🎧 Durasi audio: **{durasi:.2f} detik** | Sample rate: **{sr} Hz**")
+        st.info(f"Durasi: **{len(audio_data) / sr:.2f} detik** | Sample Rate: **{sr} Hz**")
 
-        if len(audio_data) < 2048:
-            st.error("Audio terlalu pendek. Mohon rekam ulang minimal 0.5 detik.")
-        elif st.button("🚀 Jalankan Prediksi", use_container_width=True):
-            with st.spinner("🔎 Memproses dan memprediksi..."):
+        if st.button("🔍 Prediksi"):
+            with st.spinner("Memproses dan memprediksi..."):
                 pred, prob, y_proc = predict_audio(audio_data, sr, model, scaler, feature_names, metadata, cfg)
-                if pred is not None:
-                    label = metadata["label_map"][pred]
-                    confidence = prob[pred] * 100
-                    st.success(f"🧠 **Prediksi:** {label} ({confidence:.2f}%)")
+                label = metadata["label_map"][pred]
+                confidence = prob[pred] * 100
 
-                    st.markdown("#### 📊 Probabilitas:")
-                    for i, name in metadata["label_map"].items():
-                        st.write(f"{name}: {prob[i]*100:.2f}%")
-                        st.progress(prob[i])
+                st.success(f"**Hasil Prediksi:** {label} ({confidence:.2f}%)")
 
-                    fig = plot_waveform_and_spectrogram(y_proc, metadata["target_sr"])
-                    st.pyplot(fig)
+                st.markdown("#### 🔢 Probabilitas Klasifikasi:")
+                for i, name in metadata["label_map"].items():
+                    st.write(f"{name}: {prob[i]*100:.2f}%")
+                    st.progress(prob[i])
+
+                # Tampilkan diagram setelah prediksi
+                fig = plot_bar_and_spectrogram(y_proc, metadata["target_sr"])
+                st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
