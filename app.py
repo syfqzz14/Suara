@@ -120,104 +120,90 @@ def plot_waveform_and_spectrogram(y, sr):
 # 🚀 Main App (UI diperindah)
 # ==========================================================
 def main():
-    st.set_page_config(page_title="Klasifikasi Suara Buka/Tutup", layout="wide")
+    st.markdown(
+        "<h1 style='text-align:center; color:#1E90FF;'>🔊 Klasifikasi Suara Buka/Tutup</h1>"
+        "<p style='text-align:center;'>Deteksi otomatis jenis suara (buka/tutup) menggunakan model Machine Learning</p><hr>",
+        unsafe_allow_html=True
+    )
 
-    # ==== Custom CSS untuk tampilan mewah ====
-    st.markdown("""
-    <style>
-        body { background-color: #f7f9fb; }
-        .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-        h1, h2, h3 { font-family: 'Poppins', sans-serif; }
-        .title {
-            text-align: center;
-            font-size: 42px;
-            background: -webkit-linear-gradient(45deg, #0077ff, #00c3ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
-        .subtext {
-            text-align: center;
-            font-size: 18px;
-            color: #555;
-            margin-bottom: 30px;
-        }
-        .sidebar .sidebar-content {
-            background-color: #ffffff;
-            border-right: 1px solid #eee;
-            padding: 20px;
-        }
-        .stRadio > label { font-weight: 600; }
-        .info-card {
-            background-color: #eef5ff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .result-box {
-            background-color: #e8fce8;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 18px;
-            color: #006400;
-            text-align: center;
-            margin-top: 10px;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    with st.spinner("🔄 Memuat model dan konfigurasi..."):
+        model, scaler, feature_names, metadata, cfg = load_model_artifacts()
 
-    # ==== Header ====
-    st.markdown("<h1 class='title'>🔊 Klasifikasi Suara Buka/Tutup</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtext'>Deteksi otomatis jenis suara (buka/tutup) menggunakan model Machine Learning</p>", unsafe_allow_html=True)
-    st.markdown("---")
+    # Sidebar Info
+    st.sidebar.markdown("### 📊 Informasi Model")
+    st.sidebar.markdown(
+        f"""
+        **Akurasi Training:** {metadata['train_accuracy']:.2%}  
+        **Akurasi Testing:** {metadata['test_accuracy']:.2%}  
+        **Jumlah Fitur:** {metadata['n_features']}  
+        **Sample Rate:** {metadata['target_sr']} Hz
+        """
+    )
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🧭 Petunjuk")
+    st.sidebar.info("Pilih sumber suara, rekam atau upload file audio, lalu klik **Prediksi** untuk melihat hasil klasifikasi.")
 
-    # ==== Layout dua kolom ====
-    col1, col2 = st.columns([1, 2.2], gap="large")
+    # Konten utama
+    st.subheader("🎙️ Input Audio")
+    option = st.radio("Pilih sumber audio:", ["Rekam Langsung", "Upload File"])
 
-    # === Sidebar Kiri: Informasi Model ===
-    with col1:
-        st.markdown("###Informasi Model")
-        st.markdown("**Akurasi Training:** 100.00%")
-        st.markdown("**Akurasi Testing:** 98.75%")
-        st.markdown("**Jumlah Fitur:** 70")
-        st.markdown("**Sample Rate:** 16000 Hz")
+    audio_data, sr = None, None
 
-        st.markdown("---")
-        st.markdown("### 📘 Petunjuk Penggunaan")
-        st.info("""
-        1️⃣ Pilih sumber suara: rekam langsung atau upload file.  
-        2️⃣ Klik **Prediksi** untuk melihat hasil klasifikasi.  
-        3️⃣ Lihat hasil berupa diagram batang dan waveform audio.
-        """)
+    # ===== Rekam langsung =====
+    if option == "Rekam Langsung":
+        audio_bytes = audio_recorder(
+            text="Klik untuk mulai/stop rekam",
+            recording_color="#ff4b4b",
+            neutral_color="#1E90FF",
+            icon_size="2x"
+        )
+        if audio_bytes:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                tmp.write(audio_bytes)
+                tmp_path = tmp.name
+            try:
+                y, sr = librosa.load(tmp_path, sr=None, mono=True)
+                st.audio(audio_bytes, format="audio/wav")
+                audio_data = y
+            finally:
+                os.remove(tmp_path)
 
-    # === Kolom Kanan: Input Audio & Prediksi ===
-    with col2:
-        st.subheader("Input Audio")
-        source = st.radio("Pilih sumber audio:", ["Rekam Langsung", "Upload File"])
+    # ===== Upload file =====
+    else:
+        uploaded_file = st.file_uploader("📁 Upload file audio", type=["wav", "mp3"])
+        if uploaded_file is not None:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                tmp.write(uploaded_file.read())
+                tmp_path = tmp.name
+            try:
+                y, sr = librosa.load(tmp_path, sr=None, mono=True)
+                st.audio(uploaded_file, format="audio/wav")
+                audio_data = y
+            finally:
+                os.remove(tmp_path)
 
-        # Contoh simulasi prediksi model
-        st.write("Contoh hasil prediksi (dummy):")
-        classes = ["Buka", "Tutup"]
-        probs = [0.73, 0.27]  # ganti bagian ini dengan hasil prediksi model-mu
+    # ===== Tombol Prediksi =====
+    if audio_data is not None and sr is not None:
+        durasi = len(audio_data) / sr
+        st.info(f"🎧 Durasi audio: **{durasi:.2f} detik** | Sample rate: **{sr} Hz**")
 
-        # Diagram batang hasil prediksi
-        fig, ax = plt.subplots(figsize=(4, 3))
-        bars = ax.bar(classes, probs, color=["#4CAF50", "#F44336"], alpha=0.9)
-        ax.set_ylim(0, 1)
-        ax.set_ylabel("Probabilitas")
-        ax.set_title("Hasil Prediksi")
-        for bar, p in zip(bars, probs):
-            ax.text(bar.get_x() + bar.get_width()/2, p + 0.03, f"{p*100:.1f}%", ha='center', fontsize=12)
-        st.pyplot(fig)
+        if len(audio_data) < 2048:
+            st.error("Audio terlalu pendek. Mohon rekam ulang minimal 0.5 detik.")
+        elif st.button("🚀 Jalankan Prediksi", use_container_width=True):
+            with st.spinner("🔎 Memproses dan memprediksi..."):
+                pred, prob, y_proc = predict_audio(audio_data, sr, model, scaler, feature_names, metadata, cfg)
+                if pred is not None:
+                    label = metadata["label_map"][pred]
+                    confidence = prob[pred] * 100
+                    st.success(f"🧠 **Prediksi:** {label} ({confidence:.2f}%)")
 
-        # Hasil teks ringkas
-        pred_class = classes[np.argmax(probs)]
-        st.markdown(f"<div class='result-box'>Prediksi: <b>{pred_class}</b> ({max(probs)*100:.1f}%)</div>", unsafe_allow_html=True)
+                    st.markdown("#### 📊 Probabilitas:")
+                    for i, name in metadata["label_map"].items():
+                        st.write(f"{name}: {prob[i]*100:.2f}%")
+                        st.progress(prob[i])
 
-    # === Opsional: visualisasi audio ===
-    st.markdown("---")
-    st.subheader("Visualisasi Audio (Waveform & Spectrogram)")
-    st.image("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/_images/penguins.png", caption="Contoh Tampilan Sementara")  # ganti dengan grafik waveform kamu
+                    fig = plot_waveform_and_spectrogram(y_proc, metadata["target_sr"])
+                    st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
